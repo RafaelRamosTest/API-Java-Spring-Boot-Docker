@@ -1,0 +1,36 @@
+# Compilação e build
+/target/
+/build/
+
+# Arquivos de log
+*.log
+
+# Arquivos compilados
+*.class
+
+# Arquivos temporários
+*.swp
+*.tmp
+*.bak
+
+# Configuração de IDEs
+# IntelliJ
+.idea/
+*.iml
+# Eclipse
+.project
+.classpath
+.settings/
+# VS Code
+.vscode/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.jar
+
+# Arquivos de configuração locais (separar configs sensíveis)
+application-local.properties
+application-local.yml
