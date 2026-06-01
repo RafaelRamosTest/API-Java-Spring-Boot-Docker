@@ -3,6 +3,7 @@ C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-sprin
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\ActivityApplication.java
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\dto\ActivityDTO.java
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\exception\ActivityExceptionHandler.java
+C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\config\KafkaTopicConfig.java
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\service\ActivityService.java
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\controller\ActivityController.java
 C:\Users\rafae\Desktop\Tecnologia\API\API-Java-Spring-Boot-Docker\api-java-springboot-docker\activity-service\src\main\java\com\exemple\activity\service\ActivityProducer.java

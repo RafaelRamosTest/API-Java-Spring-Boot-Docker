@@ -5,12 +5,12 @@ import com.exemple.activity.service.ActivityService;
 import com.exemple.activity.service.ActivityProducer;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/activities")
 public class ActivityController {
 
     private final ActivityService activityService;
@@ -21,7 +21,7 @@ public class ActivityController {
         this.activityProducer = activityProducer;
     }
 
-    @GetMapping("/activities")
+    @GetMapping
     public List<ActivityResponse> getActivities() throws JsonProcessingException {
         List<ActivityResponse> activities = activityService.listAllActivities();
 
@@ -33,6 +33,11 @@ public class ActivityController {
         activityProducer.publishActivity(activitiesJson);
 
         return activities;
+    }
+
+    @PostMapping("/create")
+    public ActivityResponse createActivity(@RequestBody ActivityResponse activity) {
+        return activityService.createActivity(activity);
     }
 
 }

@@ -42,7 +42,10 @@ services:
     container_name: activity-service
     ports:
       - "8082:8080"
+      - "5005:5005"   # Porta de debug
     environment:
+      SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
     depends_on:
       - kafka
