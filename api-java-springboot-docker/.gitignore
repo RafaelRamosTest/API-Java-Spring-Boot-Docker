@@ -2,6 +2,17 @@
 /target/
 /build/
 
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+
 # Arquivos de log
 *.log
 
@@ -14,19 +25,18 @@
 *.bak
 
 # Configuração de IDEs
-# IntelliJ
+# IntelliJ IDEA
 .idea/
 *.iml
-# Eclipse
-.project
-.classpath
-.settings/
-# VS Code
-.vscode/
+*.iws
+out/
 
 # Sistema operacional
 .DS_Store
 Thumbs.db
+
+# Docker
+*.pid
 
 # Maven Wrapper
 .mvn/wrapper/maven-wrapper.jar

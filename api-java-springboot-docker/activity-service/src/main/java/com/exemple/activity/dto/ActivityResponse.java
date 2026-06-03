@@ -1,17 +1,17 @@
 package com.exemple.activity.dto;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDateTime;
 
 public class ActivityResponse {
     private Long id;
     private String title;
-    private OffsetDateTime dueDate;
+    private String dueDate;
     private boolean completed;
 
     // Construtores
     public ActivityResponse() {}
 
-    public ActivityResponse(Long id, String title, OffsetDateTime dueDate, boolean completed) {
+    public ActivityResponse(Long id, String title, String dueDate, boolean completed) {
         this.id = id;
         this.title = title;
         this.dueDate = dueDate;
@@ -25,8 +25,8 @@ public class ActivityResponse {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public OffsetDateTime getDueDate() { return dueDate; }
-    public void setDueDate(OffsetDateTime dueDate) { this.dueDate = dueDate; }
+    public String getDueDate() { return dueDate; }
+    public void setDueDate(String dueDate) { this.dueDate = dueDate; }
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }

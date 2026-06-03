@@ -7,9 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -34,7 +32,7 @@ public class ActivityService {
     }
 
     public ActivityResponse createActivity(ActivityResponse activity) {
-
+        /*
         // gera id sequencial único
         activity.setId((long) idGenerator.getAndIncrement());
 
@@ -43,9 +41,8 @@ public class ActivityService {
         activity.setTitle("Activity " + randomNumber);
 
         // gera dueDate no horário de Brasília
-        LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
-        OffsetDateTime dueDate = now.atZone(ZoneId.of("America/Sao_Paulo")).toOffsetDateTime();
-        activity.setDueDate(dueDate);
+        //LocalDateTime dueDate = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        activity.setDueDate("2026-06-03T16:47:07");*/
 
         // envia para API externa
         ActivityResponse created = restTemplate.postForObject(url, activity, ActivityResponse.class);
