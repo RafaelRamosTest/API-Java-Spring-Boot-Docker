@@ -11,10 +11,9 @@ public class ActivityResponse {
     // Construtores
     public ActivityResponse() {}
 
-    public ActivityResponse(Long id, String title, String dueDate, boolean completed) {
+    public ActivityResponse(Long id, String title, boolean completed) {
         this.id = id;
         this.title = title;
-        this.dueDate = dueDate;
         this.completed = completed;
     }
 
@@ -24,9 +23,6 @@ public class ActivityResponse {
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-
-    public String getDueDate() { return dueDate; }
-    public void setDueDate(String dueDate) { this.dueDate = dueDate; }
 
     public boolean isCompleted() { return completed; }
     public void setCompleted(boolean completed) { this.completed = completed; }

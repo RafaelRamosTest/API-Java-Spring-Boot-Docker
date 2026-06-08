@@ -32,17 +32,6 @@ public class ActivityService {
     }
 
     public ActivityResponse createActivity(ActivityResponse activity) {
-        /*
-        // gera id sequencial único
-        activity.setId((long) idGenerator.getAndIncrement());
-
-        // gera título com número aleatório
-        int randomNumber = ThreadLocalRandom.current().nextInt(1000, 9999);
-        activity.setTitle("Activity " + randomNumber);
-
-        // gera dueDate no horário de Brasília
-        //LocalDateTime dueDate = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
-        activity.setDueDate("2026-06-03T16:47:07");*/
 
         // envia para API externa
         ActivityResponse created = restTemplate.postForObject(url, activity, ActivityResponse.class);

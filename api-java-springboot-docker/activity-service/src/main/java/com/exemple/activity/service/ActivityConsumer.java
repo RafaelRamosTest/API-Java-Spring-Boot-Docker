@@ -19,7 +19,6 @@ public class ActivityConsumer {
             // Imprime os campos de forma estruturada
             System.out.println("Nova atividade recebida:");
             System.out.println("Título: " + activity.getTitle());
-            System.out.println("Data: " + activity.getDueDate());
 
         } catch (Exception e) {
             System.err.println("Erro ao deserializar mensagem: " + message);
