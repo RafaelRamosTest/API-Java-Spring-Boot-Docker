@@ -1,12 +1,27 @@
 package com.exemple.activity.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.http.*;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class Auth0Config {
+
+    @Value("${auth0.domain}")
+    private String domain;
+
+    @Value("${auth0.clientId}")
+    private String clientId;
+
+    @Value("${auth0.clientSecret}")
+    private String clientSecret;
+
+    @Value("${auth0.audience}")
+    private String audience;
 
     @Bean
     public RestTemplate restTemplate() {
@@ -14,17 +29,17 @@ public class Auth0Config {
     }
 
     @Bean
-    public String auth0Token(RestTemplate restTemplate) {
-        String url = "https://meuapp.us.auth0.com/oauth/token";
+    public String auth0Token(RestTemplate restTemplate) throws Exception {
+        String url = "https://" + domain + "/oauth/token";
 
         String body = """
         {
-          "client_id": "SEU_CLIENT_ID",
-          "client_secret": "SEU_CLIENT_SECRET",
-          "audience": "https://meuapp.us.auth0.com/api/v2/",
+          "client_id": "%s",
+          "client_secret": "%s",
+          "audience": "%s",
           "grant_type": "client_credentials"
         }
-        """;
+        """.formatted(clientId, clientSecret, audience);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -34,7 +49,9 @@ public class Auth0Config {
         ResponseEntity<String> response =
                 restTemplate.postForEntity(url, request, String.class);
 
-        // Aqui você pode usar Jackson para extrair o "access_token" do JSON
-        return response.getBody(); // simplificado
+        // Extrair apenas o access_token
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode json = mapper.readTree(response.getBody());
+        return json.get("access_token").asText();
     }
 }

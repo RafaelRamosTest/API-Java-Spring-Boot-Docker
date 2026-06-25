@@ -1,5 +1,8 @@
 package com.exemple.activity.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -8,33 +11,50 @@ import org.springframework.web.client.RestTemplate;
 public class Auth0ClientService {
 
     private final RestTemplate restTemplate;
-    private final String domain = "https://dev-y3883jpsf8nhsfif.us.auth0.com/api/v2/users";
-    private final String jwtToken;
+    private final String domain;
+    private final String clientId;
+    private final String clientSecret;
+    private final String audience;
 
-    public Auth0ClientService(RestTemplate restTemplate, String auth0Token) {
+    public Auth0ClientService(RestTemplate restTemplate,
+                              @Value("${auth0.domain}") String domain,
+                              @Value("${auth0.clientId}") String clientId,
+                              @Value("${auth0.clientSecret}") String clientSecret,
+                              @Value("${auth0.audience}") String audience) {
         this.restTemplate = restTemplate;
-        this.jwtToken = auth0Token; // injetado pelo Auth0Config
+        this.domain = domain;
+        this.clientId = clientId;
+        this.clientSecret = clientSecret;
+        this.audience = audience;
     }
 
-    public String createUser(String email, String password) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(jwtToken);
+    public String getAccessToken() {
+        String url = "https://" + domain + "/oauth/token";
 
         String body = """
         {
-          "email": "%s",
-          "password": "%s",
-          "connection": "Username-Password-Authentication"
+          "client_id": "%s",
+          "client_secret": "%s",
+          "audience": "%s",
+          "grant_type": "client_credentials"
         }
-        """.formatted(email, password);
+        """.formatted(clientId, clientSecret, audience);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
 
         HttpEntity<String> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<String> response =
-                restTemplate.postForEntity(domain, request, String.class);
+                restTemplate.postForEntity(url, request, String.class);
 
-        return response.getBody();
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(response.getBody());
+            return json.get("access_token").asText();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao obter access_token do Auth0", e);
+        }
     }
 }
 

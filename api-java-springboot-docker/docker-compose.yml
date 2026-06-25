@@ -47,5 +47,12 @@ services:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
       JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+      AUTH0_DOMAIN: dev-y3883jpsf8nhsfif.us.auth0.com
+      AUTH0_CLIENT_ID: tB9d9M0GOOexyDBlvTg4GzIZGEYjUscC
+      AUTH0_CLIENTID: tB9d9M0GOOexyDBlvTg4GzIZGEYjUscC
+      AUTH0_CLIENT_SECRET: 5d1VXlYQbO65WxZnFYOpGmaKebmYlqq3lmCUDdW7Fk2SGSHqpb6-pBjB5eCBU3yx
+      AUTH0_CLIENTSECRET: 5d1VXlYQbO65WxZnFYOpGmaKebmYlqq3lmCUDdW7Fk2SGSHqpb6-pBjB5eCBU3yx
+      AUTH0_AUDIENCE: https://dev-y3883jpsf8nhsfif.us.auth0.com/api/v2/
     depends_on:
       - kafka

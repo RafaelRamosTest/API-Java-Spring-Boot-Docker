@@ -3,3 +3,8 @@ spring:
     bootstrap-servers: kafka:29092
 server:
   port: 8080
+auth0:
+  domain: ${AUTH0_DOMAIN}
+  clientId: ${AUTH0_CLIENT_ID}
+  clientSecret: ${AUTH0_CLIENT_SECRET}
+  audience: ${AUTH0_AUDIENCE}
