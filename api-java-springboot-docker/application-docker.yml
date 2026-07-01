@@ -1,6 +1,12 @@
 spring:
   kafka:
     bootstrap-servers: kafka:29092
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Substitua com o seu domínio do Auth0 (deve terminar com a barra /)
+          issuer-uri: https://dev-y3883jpsf8nhsfif.us.auth0.com/
 server:
   port: 8080
 auth0:
