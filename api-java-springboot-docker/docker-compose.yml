@@ -1,4 +1,4 @@
-version: '3.8'
+#version: '3.8'
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -51,10 +51,10 @@ services:
       #JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dserver.max-http-header-size=200000"
 
       AUTH0_DOMAIN: dev-y3883jpsf8nhsfif.us.auth0.com
-      AUTH0_CLIENT_ID: ZEybQ1ONA5erFLIrTCSPeXTqg604jJ2r
-      AUTH0_CLIENTID: ZEybQ1ONA5erFLIrTCSPeXTqg604jJ2r
-      AUTH0_CLIENT_SECRET: iTvGnICamok6B_gBCqCiuw0q0FSTt-cD-SlvS19-d2C3xmhso99Zhke9doQX_ofF
-      AUTH0_CLIENTSECRET: iTvGnICamok6B_gBCqCiuw0q0FSTt-cD-SlvS19-d2C3xmhso99Zhke9doQX_ofF
-      AUTH0_AUDIENCE: https://dev-y3883jpsf8nhsfif.us.auth0.com/api/v2/
+      AUTH0_CLIENT_ID: MfiTcKO9mWh9UPRGSMnWKyZfJj0ED4xv
+      AUTH0_CLIENTID: MfiTcKO9mWh9UPRGSMnWKyZfJj0ED4xv
+      AUTH0_CLIENT_SECRET: gYeIdioXXxgin12EruYySrkpylzaWflpTxWM4qKXyPkfYF2G87eAuPHPvXzqbd_8
+      AUTH0_CLIENTSECRET: gYeIdioXXxgin12EruYySrkpylzaWflpTxWM4qKXyPkfYF2G87eAuPHPvXzqbd_8
+      AUTH0_AUDIENCE: https://auth-java-springboot-docker.com/api/
     depends_on:
       - kafka

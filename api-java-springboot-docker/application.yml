@@ -22,7 +22,7 @@ spring:
 
 auth0:
   domain: ${AUTH0_DOMAIN:dev-y3883jpsf8nhsfif.us.auth0.com}
-  clientId: ${AUTH0_CLIENTID:ZEybQ1ONA5erFLIrTCSPeXTqg604jJ2r}
-  clientSecret: ${AUTH0_CLIENTSECRET:iTvGnICamok6B_gBCqCiuw0q0FSTt-cD-SlvS19-d2C3xmhso99Zhke9doQX_ofF}
-  audience: ${AUTH0_AUDIENCE:https://dev-y3883jpsf8nhsfif.us.auth0.com/api/v2/}
+  clientId: ${AUTH0_CLIENTID:MfiTcKO9mWh9UPRGSMnWKyZfJj0ED4xv}
+  clientSecret: ${AUTH0_CLIENTSECRET:gYeIdioXXxgin12EruYySrkpylzaWflpTxWM4qKXyPkfYF2G87eAuPHPvXzqbd_8}
+  audience: ${AUTH0_AUDIENCE:https://auth-java-springboot-docker.com/api/}
 
