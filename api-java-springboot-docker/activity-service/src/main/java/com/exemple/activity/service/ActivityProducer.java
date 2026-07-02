@@ -1,4 +1,25 @@
+
 package com.exemple.activity.service;
+
+import org.springframework.stereotype.Service;
+import org.springframework.kafka.core.KafkaTemplate;
+
+@Service
+public class ActivityProducer {
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    public ActivityProducer(KafkaTemplate<String, String> kafkaTemplate) {
+        this.kafkaTemplate = kafkaTemplate;
+    }
+
+    // Recebe o tópico por parâmetro dinamicamente
+    public void publishActivity(String topic, String activityJson) {
+        kafkaTemplate.send(topic, activityJson);
+    }
+}
+
+/*package com.exemple.activity.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -15,5 +36,5 @@ public class ActivityProducer {
     public void publishActivity(String activityJson) {
         kafkaTemplate.send("activities-topic", activityJson);
     }
-}
+}*/
 

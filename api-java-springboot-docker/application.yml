@@ -1,12 +1,6 @@
 spring:
   profiles:
     active: local
-  security:
-    oauth2:
-      resource-server:
-        jwt:
-          issuer-uri: https://dev-y3883jpsf8nhsfif.us.auth0.com/
-
 
 #auth0:
 #  domain: dev-y3883jpsf8nhsfif.us.auth0.com

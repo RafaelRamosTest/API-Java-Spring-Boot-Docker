@@ -1,4 +1,42 @@
+
 package com.exemple.activity.controller;
+
+import com.exemple.activity.dto.ActivityResponse;
+import com.exemple.activity.service.ActivityService;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/activities")
+//@PreAuthorize("isAuthenticated()")
+public class ActivityController {
+
+    private final ActivityService activityService;
+
+    public ActivityController(ActivityService activityService) {
+        this.activityService = activityService;
+    }
+
+    @GetMapping
+    public List<ActivityResponse> getActivities() {
+        // Toda a lógica de buscar e disparar o Kafka do GET foi para a Service
+        return activityService.listAllActivitiesAndLog();
+    }
+
+    @PostMapping("/create")
+    public ActivityResponse createActivity(
+            @RequestBody ActivityResponse activity,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject(); // Captura o ID do usuário logado
+        return activityService.createActivity(activity, userId);
+    }
+}
+
+/*package com.exemple.activity.controller;
 
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.service.ActivityService;
@@ -50,4 +88,4 @@ public class ActivityController {
 
         return activityService.createActivity(activity);
     }
-}
+}*/
