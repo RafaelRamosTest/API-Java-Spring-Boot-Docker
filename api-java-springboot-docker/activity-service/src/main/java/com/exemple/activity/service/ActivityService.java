@@ -45,6 +45,7 @@ public class ActivityService {
             ActivityLog log = new ActivityLog();
             log.setQueryTimestamp(LocalDateTime.now());
             log.setTotalRecordsConsulted(activities.size());
+            log.setActivities(activities);
 
             String jsonLog = mapper.writeValueAsString(log);
             activityProducer.publishActivity("activities-log-topic", jsonLog); // Tópico exclusivo de Logs

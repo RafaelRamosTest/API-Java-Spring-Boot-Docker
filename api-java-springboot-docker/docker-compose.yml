@@ -37,15 +37,15 @@ services:
     depends_on:
       - kafka
 
-  mongodb:
-    image: mongo:latest
-    container_name: mongodb-container
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-    environment:
-      - MONGO_INITDB_DATABASE=activity_db
+  #mongodb:
+    #  image: mongo:latest
+    #  container_name: mongodb-container
+      # ports:
+      #- "27017:27017"
+      #volumes:
+      # - mongo-data:/data/db
+      #environment:
+      # - MONGO_INITDB_DATABASE=activity_db
 
   activity-service:
     build: ./activity-service
@@ -58,7 +58,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
 
       # --- NOVAS CONFIGURAÇÕES ADICIONADAS ---
-      SPRING_DATA_MONGODB_URI: mongodb://mongodb:27017/activity_db
+      SPRING_DATA_MONGODB_URI: mongodb://host.docker.internal:27017/activity_db #mongodb://mongodb:27017/activity_db
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: https://dev-y3883jpsf8nhsfif.us.auth0.com/
       # ----------------------------------------
 
@@ -73,7 +73,9 @@ services:
       AUTH0_AUDIENCE: https://auth-java-springboot-docker.com/api/
     depends_on:
       - kafka
-      - mongodb
+      #- mongodb
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Diz para o container como achar a sua máquina
 
 volumes:
   mongo-data:
