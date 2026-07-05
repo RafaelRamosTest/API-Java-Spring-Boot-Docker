@@ -1,6 +1,7 @@
 
 package com.exemple.activity.service;
 
+import com.exemple.activity.enums.KafkaConfigEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -14,8 +15,8 @@ public class ActivityProducer {
     }
 
     // Recebe o tópico por parâmetro dinamicamente
-    public void publishActivity(String topic, String activityJson) {
-        kafkaTemplate.send(topic, activityJson);
+    public void publishActivity(KafkaConfigEnum config, String activityJson) {
+        kafkaTemplate.send(config.getTopic(), activityJson);
     }
 }
 

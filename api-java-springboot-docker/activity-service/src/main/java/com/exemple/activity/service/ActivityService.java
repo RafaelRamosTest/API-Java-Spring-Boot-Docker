@@ -2,6 +2,7 @@
 package com.exemple.activity.service;
 
 import com.exemple.activity.dto.ActivityResponse;
+import com.exemple.activity.enums.KafkaConfigEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -48,7 +49,7 @@ public class ActivityService {
             log.setActivities(activities);
 
             String jsonLog = mapper.writeValueAsString(log);
-            activityProducer.publishActivity("activities-log-topic", jsonLog); // Tópico exclusivo de Logs
+            activityProducer.publishActivity(KafkaConfigEnum.LOGS, jsonLog); // Tópico exclusivo de Logs
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,7 +67,7 @@ public class ActivityService {
         // Publica no Kafka como um único objeto JSON para o tópico de cadastros
         try {
             String json = mapper.writeValueAsString(created);
-            activityProducer.publishActivity("activities-topic", json); // Tópico exclusivo de Cadastros
+            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json); // Tópico exclusivo de Cadastros
         } catch (Exception e) {
             e.printStackTrace();
         }

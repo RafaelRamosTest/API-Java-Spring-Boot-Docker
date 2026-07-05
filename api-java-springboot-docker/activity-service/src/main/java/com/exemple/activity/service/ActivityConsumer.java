@@ -19,7 +19,10 @@ public class ActivityConsumer {
     }
 
     // Listener 1: Focado em escutar e salvar novos CADASTROS (POST)
-    @KafkaListener(topics = "activities-topic", groupId = "activity-group")
+    @KafkaListener(
+            topics = "#{T(com.exemple.activity.enums.KafkaConfigEnum).ATIVIDADES.getTopic()}",
+            groupId = "#{T(com.exemple.activity.enums.KafkaConfigEnum).ATIVIDADES.getGroupId()}"
+    )
     public void consumeCreate(String message) {
         try {
             ActivityResponse activity = mapper.readValue(message, ActivityResponse.class);
@@ -30,7 +33,10 @@ public class ActivityConsumer {
     }
 
     // Listener 2: Focado em escutar e salvar LOGS DE CONSULTA (GET)
-    @KafkaListener(topics = "activities-log-topic", groupId = "activity-group")
+    @KafkaListener(
+            topics = "#{T(com.exemple.activity.enums.KafkaConfigEnum).LOGS.getTopic()}",
+            groupId = "#{T(com.exemple.activity.enums.KafkaConfigEnum).LOGS.getGroupId()}"
+    )
     public void consumeLog(String message) {
         try {
             ActivityLog log = mapper.readValue(message, ActivityLog.class);
