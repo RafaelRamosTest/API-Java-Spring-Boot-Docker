@@ -63,7 +63,7 @@ services:
       # ----------------------------------------
 
       # Forçamos o parâmetro direto na JVM do Spring Boot
-      #JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dserver.max-http-header-size=200000"
+      JAVA_TOOL_OPTIONS: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 -Dserver.max-http-header-size=200000"
 
       AUTH0_DOMAIN: dev-y3883jpsf8nhsfif.us.auth0.com
       AUTH0_CLIENT_ID: MfiTcKO9mWh9UPRGSMnWKyZfJj0ED4xv

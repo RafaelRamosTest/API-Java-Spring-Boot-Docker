@@ -2,7 +2,6 @@
 package com.exemple.activity.service;
 
 import com.exemple.activity.dto.ActivityResponse;
-import com.exemple.activity.dto.ActivityUpdateRequest;
 import com.exemple.activity.enums.KafkaConfigEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -76,24 +75,6 @@ public class ActivityService {
         return created;
     }
 
-    // --- FLUXO DO PUT ---
-    public ActivityUpdateRequest updateActivity(ActivityUpdateRequest activity, String userId, String idActivity) {
-        // Envia para API externa
-        ActivityUpdateRequest created = restTemplate.postForObject(url + idActivity, activity, ActivityUpdateRequest.class);
-
-        System.out.println("Usuário " + userId + " atualizou a atividade" + idActivity + " com sucesso na API externa.");
-
-        // Publica no Kafka como um único objeto JSON para o tópico de cadastros
-        try {
-            String json = mapper.writeValueAsString(created);
-            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json); // Tópico exclusivo de Cadastros
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return created;
-    }
-
     // --- CONSUMERS (Salvam no Mongo) ---
 
     // Salva na collection 'activities' (POST)
@@ -104,19 +85,6 @@ public class ActivityService {
         document.setCompleted(dto.isCompleted());
         activityRepository.save(document);
         System.out.println("✅ [MongoDB] Cadastro salvo na collection 'activities'");
-    }
-
-    // Salva na collection 'activities' (PUT)
-    public void updateActivityKafka(ActivityUpdateRequest dto) {
-        Activity activity = new Activity();
-        if (dto.getTitle() != null && !dto.getTitle().isBlank()) {
-            activity.setTitle(dto.getTitle());
-        }
-        if (dto.getCompleted() != null) {
-            activity.setCompleted(dto.getCompleted());
-        }
-        activityRepository.save(activity);
-        System.out.println("✅ [MongoDB] Cadastro atuaizado na collection 'activities'");
     }
 
     // Salva na collection 'activity_logs' (GET)
