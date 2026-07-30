@@ -80,7 +80,16 @@ public class ActivityService {
     // --- CONSUMERS (Salvam no Mongo) ---
 
     // Salva na collection 'activities' (POST)
-    public void saveActivityKafka(ActivityResponse dto) {
+    /*public void saveActivityKafka(ActivityResponse dto) {
+        Activity document = new Activity();
+        document.setId(dto.getId());
+        document.setTitle(dto.getTitle());
+        document.setCompleted(dto.isCompleted());
+        activityRepository.save(document);
+        System.out.println("✅ [MongoDB] Cadastro salvo na collection 'activities'");
+    }*/
+
+    public void saveActivityKafka(ActivityCreateRequest dto) {
         Activity document = new Activity();
         document.setId(dto.getId());
         document.setTitle(dto.getTitle());

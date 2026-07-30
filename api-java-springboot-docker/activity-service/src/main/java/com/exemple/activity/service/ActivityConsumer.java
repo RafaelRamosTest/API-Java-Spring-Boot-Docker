@@ -1,6 +1,8 @@
 
 package com.exemple.activity.service;
 
+import com.exemple.activity.dto.ActivityCreateRequest;
+import com.exemple.activity.dto.ActivityEvent;
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.model.ActivityLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,10 +27,15 @@ public class ActivityConsumer {
     )
     public void consumeCreate(String message) {
         try {
-            ActivityResponse activity = mapper.readValue(message, ActivityResponse.class);
-            activityService.saveActivityKafka(activity);
+            // 2. Extrai o payload para o DTO de criação
+            ActivityCreateRequest createRequest = mapper.readValue(message, ActivityCreateRequest.class);
+
+            // 4. Salva no banco passando o ActivityCreateRequest
+            activityService.saveActivityKafka(createRequest);
+
         } catch (Exception e) {
-            System.err.println("Erro no envio do Post: " + e.getMessage());
+            System.err.println("Erro no processamento da mensagem do Kafka: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 

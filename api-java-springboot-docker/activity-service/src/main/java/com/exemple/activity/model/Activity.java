@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 @Data
 public class Activity {
     @Id
-    private Long id;
+    private String id;
     private String title;
     private Boolean completed;
 }

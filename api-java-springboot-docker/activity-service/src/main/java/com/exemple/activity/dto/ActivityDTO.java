@@ -1,25 +1,22 @@
 package com.exemple.activity.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ActivityDTO {
     private String id;
     private String name;
     private String description;
-
-    // Construtores
-    public ActivityDTO() {}
-    public ActivityDTO(String id, String name, String description) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-    }
-
-    // Getters e Setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
 }
+
+/*
+@Data: Substituiu todos os getters, setters, toString(), equals() e hashCode().
+
+@NoArgsConstructor: Cria o construtor padrão sem argumentos (public ActivityCreateRequest() {}), necessário para frameworks como Jackson (serialização JSON) e Spring.
+
+@AllArgsConstructor: Cria o construtor com todos os parâmetros que você tinha definido manualmente.
+*/

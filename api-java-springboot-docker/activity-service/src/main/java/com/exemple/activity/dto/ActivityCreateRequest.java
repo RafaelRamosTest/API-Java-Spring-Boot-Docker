@@ -1,28 +1,22 @@
 package com.exemple.activity.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class ActivityCreateRequest {
-    private Long id;
+    private String id;
     private String title;
-    private String dueDate;
     private boolean completed;
-
-    // Construtores
-    public ActivityCreateRequest() {}
-
-    public ActivityCreateRequest(Long id, String title, String dueDate, boolean completed) {
-        this.id = id;
-        this.title = title;
-        this.completed = completed;
-    }
-
-    // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
-    public boolean isCompleted() { return completed; }
-    public void setCompleted(boolean completed) { this.completed = completed; }
 }
 
+/*
+@Data: Substituiu todos os getters, setters, toString(), equals() e hashCode().
+
+@NoArgsConstructor: Cria o construtor padrão sem argumentos (public ActivityCreateRequest() {}), necessário para frameworks como Jackson (serialização JSON) e Spring.
+
+@AllArgsConstructor: Cria o construtor com todos os parâmetros que você tinha definido manualmente.
+*/
