@@ -1,6 +1,7 @@
 
 package com.exemple.activity.controller;
 
+import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.service.ActivityService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,8 +27,8 @@ public class ActivityController {
     }
 
     @PostMapping("/create")
-    public ActivityResponse createActivity(
-            @RequestBody ActivityResponse activity,
+    public ActivityCreateRequest createActivity(
+            @RequestBody ActivityCreateRequest activity,
             @AuthenticationPrincipal Jwt jwt) {
 
         String userId = jwt.getSubject(); // Captura o ID do usuário logado

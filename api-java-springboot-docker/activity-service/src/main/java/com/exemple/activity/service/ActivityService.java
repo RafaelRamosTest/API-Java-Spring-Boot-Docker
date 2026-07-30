@@ -1,6 +1,8 @@
 
 package com.exemple.activity.service;
 
+import com.exemple.activity.dto.ActivityCreateRequest;
+import com.exemple.activity.dto.ActivityEvent;
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.enums.KafkaConfigEnum;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,9 +60,9 @@ public class ActivityService {
     }
 
     // --- FLUXO DO POST ---
-    public ActivityResponse createActivity(ActivityResponse activity, String userId) {
+    public ActivityCreateRequest createActivity(ActivityCreateRequest activity, String userId) {
         // Envia para API externa
-        ActivityResponse created = restTemplate.postForObject(url, activity, ActivityResponse.class);
+        ActivityCreateRequest created = restTemplate.postForObject(url, activity, ActivityCreateRequest.class);
 
         System.out.println("Usuário " + userId + " registrou a atividade com sucesso na API externa.");
 
