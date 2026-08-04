@@ -1,17 +1,26 @@
 package com.exemple.activity.model;
 
 import com.exemple.activity.dto.ActivityResponse;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Document(collection = "activity_logs") // Collection separada no MongoDB
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Document(collection = "activity_logs")
 public class ActivityLog {
+
     @Id
     private String id;
+    private String eventType;
+    private String userId;
     private LocalDateTime queryTimestamp;
     private int totalRecordsConsulted;
     private List<ActivityResponse> activities;

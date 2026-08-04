@@ -3,7 +3,6 @@ package com.exemple.activity.service;
 
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityEvent;
-import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.model.ActivityLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -27,14 +26,24 @@ public class ActivityConsumer {
     )
     public void consumeCreate(String message) {
         try {
-            // 2. Extrai o payload para o DTO de criação
-            ActivityCreateRequest createRequest = mapper.readValue(message, ActivityCreateRequest.class);
+            // 1. Desserializa o envelope do evento enviado pelo createActivity
+            ActivityEvent event = mapper.readValue(message, ActivityEvent.class);
 
-            // 4. Salva no banco passando o ActivityCreateRequest
-            activityService.saveActivityKafka(createRequest);
+            // 2. Verifica se o evento é de CADASTRO
+            if (event.getEventType() == ActivityEvent.EventType.CREATE) {
 
+                // 3. Converte o payload interno para ActivityCreateRequest
+                ActivityCreateRequest dto = mapper.convertValue(event.getPayload(), ActivityCreateRequest.class);
+
+                if (event.getId() != null) {
+                    dto.setId(event.getId());
+                }
+
+                // 4. Manda salvar no MongoDB
+                activityService.saveActivityKafka(dto);
+            }
         } catch (Exception e) {
-            System.err.println("Erro no processamento da mensagem do Kafka: " + e.getMessage());
+            System.err.println("❌ Erro ao processar mensagem do Kafka: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -46,10 +55,23 @@ public class ActivityConsumer {
     )
     public void consumeLog(String message) {
         try {
-            ActivityLog log = mapper.readValue(message, ActivityLog.class);
+            // 1. Desserializa o envelope da mensagem
+            ActivityEvent event = mapper.readValue(message, ActivityEvent.class);
+
+            // 2. Converte o payload interno para o objeto ActivityLog
+            ActivityLog log = mapper.convertValue(event.getPayload(), ActivityLog.class);
+
+            // Optional: se você quiser associar o eventType ou userId dentro do documento de log:
+             log.setEventType(event.getEventType().name());
+             log.setUserId(event.getUserId());
+
+            // 3. Salva no MongoDB através da Service
             activityService.saveLogKafka(log);
+
+            System.out.println("✅ Log de consulta salvo no MongoDB com sucesso.");
         } catch (Exception e) {
-            System.err.println("Erro no envio do Log: " + e.getMessage());
+            System.err.println("❌ Erro no processamento do Log no Kafka: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

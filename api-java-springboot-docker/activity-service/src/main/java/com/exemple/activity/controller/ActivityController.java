@@ -4,7 +4,6 @@ package com.exemple.activity.controller;
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.service.ActivityService;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +21,10 @@ public class ActivityController {
     }
 
     @GetMapping
-    public List<ActivityResponse> getActivities() {
-        return activityService.listAllActivitiesAndLog();
+    public List<ActivityResponse> getActivities(
+            @AuthenticationPrincipal Jwt jwt) {
+        String userId = jwt.getSubject(); // Captura o ID do usuário logado
+        return activityService.listAllActivitiesAndLog(userId);
     }
 
     @PostMapping("/create")

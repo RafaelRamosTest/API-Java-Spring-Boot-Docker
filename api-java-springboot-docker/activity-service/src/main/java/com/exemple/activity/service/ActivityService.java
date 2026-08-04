@@ -17,6 +17,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Collections;
 
 @Service
 public class ActivityService {
@@ -39,20 +40,28 @@ public class ActivityService {
     }
 
     // --- FLUXO DO GET ---
-    public List<ActivityResponse> listAllActivitiesAndLog() {
+    public List<ActivityResponse> listAllActivitiesAndLog(String userId) {
         ActivityResponse[] response = restTemplate.getForObject(url, ActivityResponse[].class);
-        List<ActivityResponse> activities = Arrays.asList(response);
+        List<ActivityResponse> activities = response != null ? Arrays.asList(response) : Collections.emptyList();
 
-        // Dispara para o Kafka informando que uma consulta foi feita (enviando os metadados do Log)
         try {
-            ActivityLog log = new ActivityLog();
-            log.setQueryTimestamp(LocalDateTime.now());
-            log.setTotalRecordsConsulted(activities.size());
-            log.setActivities(activities);
+            // 1. Cria o objeto interno com os dados da consulta
+            ActivityLog logData = new ActivityLog();
+            logData.setQueryTimestamp(LocalDateTime.now());
+            logData.setTotalRecordsConsulted(activities.size());
+            logData.setActivities(activities);
 
-            String jsonLog = mapper.writeValueAsString(log);
-            activityProducer.publishActivity(KafkaConfigEnum.LOGS, jsonLog); // Tópico exclusivo de Logs
+            // 2. Envelopa no ActivityEvent com eventType = READ (ou LIST)
+            ActivityEvent event = ActivityEvent.builder()
+                    .eventType(ActivityEvent.EventType.READ) // 👈 Informa o tipo
+                    .userId(userId)
+                    .payload(logData) // 👈 O ActivityLog vai dentro do payload
+                    .build();
+
+            String jsonLog = mapper.writeValueAsString(event);
+            activityProducer.publishActivity(KafkaConfigEnum.LOGS, jsonLog);
         } catch (Exception e) {
+            System.err.println("Erro ao publicar log no Kafka: " + e.getMessage());
             e.printStackTrace();
         }
 
@@ -68,7 +77,13 @@ public class ActivityService {
 
         // Publica no Kafka como um único objeto JSON para o tópico de cadastros
         try {
-            String json = mapper.writeValueAsString(created);
+            ActivityEvent event = ActivityEvent.builder()
+                    .eventType(ActivityEvent.EventType.CREATE) // 👈 Identifica o evento como Cadastro
+                    .id(created.getId())
+                    .userId(userId)
+                    .payload(created) // 👈 O objeto da atividade vai aqui dentro
+                    .build();
+            String json = mapper.writeValueAsString(event);
             activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json); // Tópico exclusivo de Cadastros
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,15 +95,6 @@ public class ActivityService {
     // --- CONSUMERS (Salvam no Mongo) ---
 
     // Salva na collection 'activities' (POST)
-    /*public void saveActivityKafka(ActivityResponse dto) {
-        Activity document = new Activity();
-        document.setId(dto.getId());
-        document.setTitle(dto.getTitle());
-        document.setCompleted(dto.isCompleted());
-        activityRepository.save(document);
-        System.out.println("✅ [MongoDB] Cadastro salvo na collection 'activities'");
-    }*/
-
     public void saveActivityKafka(ActivityCreateRequest dto) {
         Activity document = new Activity();
         document.setId(dto.getId());

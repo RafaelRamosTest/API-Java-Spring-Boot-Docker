@@ -14,10 +14,11 @@ public class ActivityEvent {
     public enum EventType {
         CREATE,
         UPDATE,
-        DELETE
+        DELETE,
+        READ
     }
 
-    private EventType eventType; // CREATE, UPDATE ou DELETE
+    private EventType eventType; // CREATE, UPDATE, DELETE, READ
     private String id;          // Útil para rastreio direto e fundamental no DELETE
     private String userId;      // Quem realizou a ação
     private Object payload;     // Dados da atividade (DTO de Request/Response)
