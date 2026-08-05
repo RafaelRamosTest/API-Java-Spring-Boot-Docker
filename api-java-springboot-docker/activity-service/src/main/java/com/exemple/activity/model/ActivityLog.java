@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import lombok.Data;
-import java.time.LocalDateTime;
+
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -21,7 +22,7 @@ public class ActivityLog {
     private String id;
     private String eventType;
     private String userId;
-    private LocalDateTime queryTimestamp;
+    private Instant timestamp;
     private int totalRecordsConsulted;
     private List<ActivityResponse> activities;
 }

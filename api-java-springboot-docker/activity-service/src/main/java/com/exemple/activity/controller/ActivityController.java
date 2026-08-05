@@ -35,4 +35,13 @@ public class ActivityController {
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
         return activityService.createActivity(activity, userId);
     }
+
+    /*@PutMapping("/update")
+    public ActivityCreateRequest updateActivity(
+            @RequestBody ActivityCreateRequest activity,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String userId = jwt.getSubject(); // Captura o ID do usuário logado
+        return activityService.updateActivity(activity, userId);
+    }*/
 }

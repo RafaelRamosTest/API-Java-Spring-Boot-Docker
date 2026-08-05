@@ -14,7 +14,7 @@ import com.exemple.activity.repository.ActivityRepository;
 import com.exemple.activity.repository.ActivityLogRepository;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Collections;
@@ -47,7 +47,7 @@ public class ActivityService {
         try {
             // 1. Cria o objeto interno com os dados da consulta
             ActivityLog logData = new ActivityLog();
-            logData.setQueryTimestamp(LocalDateTime.now());
+            logData.setTimestamp(Instant.now());
             logData.setTotalRecordsConsulted(activities.size());
             logData.setActivities(activities);
 
@@ -95,13 +95,9 @@ public class ActivityService {
     // --- CONSUMERS (Salvam no Mongo) ---
 
     // Salva na collection 'activities' (POST)
-    public void saveActivityKafka(ActivityCreateRequest dto) {
-        Activity document = new Activity();
-        document.setId(dto.getId());
-        document.setTitle(dto.getTitle());
-        document.setCompleted(dto.isCompleted());
-        activityRepository.save(document);
-        System.out.println("✅ [MongoDB] Cadastro salvo na collection 'activities'");
+    public void saveActivityKafka(Activity activity) {
+        activityRepository.save(activity);
+        System.out.println("✅ [MongoDB] Cadastro salvo na collection 'activities' para o usuário: " + activity.getUserId());
     }
 
     // Salva na collection 'activity_logs' (GET)

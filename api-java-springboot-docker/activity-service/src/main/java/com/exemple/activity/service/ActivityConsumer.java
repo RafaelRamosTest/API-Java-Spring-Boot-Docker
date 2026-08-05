@@ -3,11 +3,14 @@ package com.exemple.activity.service;
 
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityEvent;
+import com.exemple.activity.model.Activity;
 import com.exemple.activity.model.ActivityLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
+import java.time.Instant;
 
 @Service
 public class ActivityConsumer {
@@ -24,23 +27,27 @@ public class ActivityConsumer {
             topics = "#{T(com.exemple.activity.enums.KafkaConfigEnum).ATIVIDADES.getTopic()}",
             groupId = "#{T(com.exemple.activity.enums.KafkaConfigEnum).ATIVIDADES.getGroupId()}"
     )
+    @KafkaListener(topics = "atividades", groupId = "activity-group-v2")
+    @KafkaListener(topics = "atividades", groupId = "activity-group-v2")
     public void consumeCreate(String message) {
         try {
-            // 1. Desserializa o envelope do evento enviado pelo createActivity
             ActivityEvent event = mapper.readValue(message, ActivityEvent.class);
 
-            // 2. Verifica se o evento é de CADASTRO
             if (event.getEventType() == ActivityEvent.EventType.CREATE) {
-
-                // 3. Converte o payload interno para ActivityCreateRequest
+                // Converte o payload para o DTO
                 ActivityCreateRequest dto = mapper.convertValue(event.getPayload(), ActivityCreateRequest.class);
 
-                if (event.getId() != null) {
-                    dto.setId(event.getId());
-                }
+                // Monta o objeto Activity completo já com os metadados
+                Activity activity = new Activity();
+                activity.setId(event.getId() != null ? event.getId() : dto.getId());
+                activity.setTitle(dto.getTitle());
+                activity.setCompleted(dto.isCompleted());
+                activity.setUserId(event.getUserId());
+                activity.setEventType(event.getEventType().name());
+                activity.setTimestamp(Instant.now());
 
-                // 4. Manda salvar no MongoDB
-                activityService.saveActivityKafka(dto);
+                // Envia a entidade pronta para salvar
+                activityService.saveActivityKafka(activity);
             }
         } catch (Exception e) {
             System.err.println("❌ Erro ao processar mensagem do Kafka: " + e.getMessage());
