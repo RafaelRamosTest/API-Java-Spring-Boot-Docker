@@ -3,9 +3,11 @@ package com.exemple.activity.service;
 
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityEvent;
+import com.exemple.activity.mapper.ActivityMapper;
 import com.exemple.activity.model.Activity;
 import com.exemple.activity.model.ActivityLog;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -13,14 +15,17 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import java.time.Instant;
 
 @Service
+@RequiredArgsConstructor // 👈 O Lombok gera o construtor automaticamente para todos os campos 'final'
 public class ActivityConsumer {
 
-    private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    //private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private final ObjectMapper mapper;
     private final ActivityService activityService;
+    private final ActivityMapper activityMapper; // 👈 Injeta o Mapper
 
-    public ActivityConsumer(ActivityService activityService) {
+    /*public ActivityConsumer(ActivityService activityService) {
         this.activityService = activityService;
-    }
+    }*/
 
     // Listener 1: Focado em escutar e salvar novos CADASTROS (POST)
     @KafkaListener(
@@ -28,8 +33,22 @@ public class ActivityConsumer {
             groupId = "#{T(com.exemple.activity.enums.KafkaConfigEnum).ATIVIDADES.getGroupId()}"
     )
     @KafkaListener(topics = "atividades", groupId = "activity-group-v2")
-    @KafkaListener(topics = "atividades", groupId = "activity-group-v2")
     public void consumeCreate(String message) {
+        try {
+            ActivityEvent event = mapper.readValue(message, ActivityEvent.class);
+
+            if (event.getEventType() == ActivityEvent.EventType.CREATE) {
+                ActivityCreateRequest dto = mapper.convertValue(event.getPayload(), ActivityCreateRequest.class);
+                Activity activity = activityMapper.activityEntity(event, dto);
+
+                activityService.saveActivityKafka(activity);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao processar mensagem do Kafka: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    /*public void consumeCreate(String message) {
         try {
             ActivityEvent event = mapper.readValue(message, ActivityEvent.class);
 
@@ -53,7 +72,7 @@ public class ActivityConsumer {
             System.err.println("❌ Erro ao processar mensagem do Kafka: " + e.getMessage());
             e.printStackTrace();
         }
-    }
+    }*/
 
     // Listener 2: Focado em escutar e salvar LOGS DE CONSULTA (GET)
     @KafkaListener(
