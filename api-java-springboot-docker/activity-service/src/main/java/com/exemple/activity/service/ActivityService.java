@@ -4,7 +4,9 @@ package com.exemple.activity.service;
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityEvent;
 import com.exemple.activity.dto.ActivityResponse;
+import com.exemple.activity.dto.ActivityUpdateRequest;
 import com.exemple.activity.enums.KafkaConfigEnum;
+import com.exemple.activity.mapper.ActivityMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -25,15 +27,16 @@ public class ActivityService {
     private static final String url = "https://fakerestapi.azurewebsites.net/api/v1/Activities";
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
-    //private final ObjectMapper mapper = new ObjectMapper();
+    private final ActivityMapper activityMapper;
 
     private final ActivityProducer activityProducer;
     private final ActivityRepository activityRepository;
     private final ActivityLogRepository activityLogRepository; // Novo repositório injetado
 
-    public ActivityService(ActivityProducer activityProducer,
+    public ActivityService(ActivityMapper activityMapper, ActivityProducer activityProducer,
                            ActivityRepository activityRepository,
                            ActivityLogRepository activityLogRepository) {
+        this.activityMapper = activityMapper;
         this.activityProducer = activityProducer;
         this.activityRepository = activityRepository;
         this.activityLogRepository = activityLogRepository;
@@ -45,17 +48,18 @@ public class ActivityService {
         List<ActivityResponse> activities = response != null ? Arrays.asList(response) : Collections.emptyList();
 
         try {
-            // 1. Cria o objeto interno com os dados da consulta
-            ActivityLog logData = new ActivityLog();
-            logData.setTimestamp(Instant.now());
-            logData.setTotalRecordsConsulted(activities.size());
-            logData.setActivities(activities);
+            // 1. Instancia o objeto de log usando o Builder do Lombok
+            ActivityLog logData = ActivityLog.builder()
+                    .timestamp(Instant.now())
+                    .totalRecordsConsulted(activities.size())
+                    .activities(activities)
+                    .build();
 
-            // 2. Envelopa no ActivityEvent com eventType = READ (ou LIST)
+            // 2. Envelopa no ActivityEvent com eventType = READ
             ActivityEvent event = ActivityEvent.builder()
-                    .eventType(ActivityEvent.EventType.READ) // 👈 Informa o tipo
+                    .eventType(ActivityEvent.EventType.READ)
                     .userId(userId)
-                    .payload(logData) // 👈 O ActivityLog vai dentro do payload
+                    .payload(logData)
                     .build();
 
             String jsonLog = mapper.writeValueAsString(event);
@@ -70,26 +74,55 @@ public class ActivityService {
 
     // --- FLUXO DO POST ---
     public ActivityCreateRequest createActivity(ActivityCreateRequest activity, String userId) {
-        // Envia para API externa
-        ActivityCreateRequest created = restTemplate.postForObject(url, activity, ActivityCreateRequest.class);
 
-        System.out.println("Usuário " + userId + " registrou a atividade com sucesso na API externa.");
+        // 1. Garante que a atividade possua um ID (Gera um UUID caso não venha preenchido no request)
+        if (activity.getId() == null || activity.getId().isBlank()) {
+            activity.setId(java.util.UUID.randomUUID().toString());
+        }
 
-        // Publica no Kafka como um único objeto JSON para o tópico de cadastros
+        // 2. Publica o evento de CREATE diretamente no Kafka
         try {
             ActivityEvent event = ActivityEvent.builder()
-                    .eventType(ActivityEvent.EventType.CREATE) // 👈 Identifica o evento como Cadastro
-                    .id(created.getId())
+                    .eventType(ActivityEvent.EventType.CREATE) // Identifica como Cadastro
+                    .id(activity.getId())
                     .userId(userId)
-                    .payload(created) // 👈 O objeto da atividade vai aqui dentro
+                    .payload(activity) // O próprio DTO é o payload
                     .build();
+
             String json = mapper.writeValueAsString(event);
-            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json); // Tópico exclusivo de Cadastros
+            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json);
+
+            System.out.println("✅ Usuário " + userId + " publicou o cadastro no Kafka com ID: " + activity.getId());
         } catch (Exception e) {
+            System.err.println("❌ Erro ao publicar evento de cadastro no Kafka: " + e.getMessage());
             e.printStackTrace();
         }
 
-        return created;
+        // 3. Retorna o próprio objeto enviado (agora com ID garantido)
+        return activity;
+    }
+
+    // --- FLUXO DO PUT ---
+    public ActivityUpdateRequest updateActivity(String id, ActivityUpdateRequest request, String userId) {
+
+        // 2. Publica o evento de UPDATE no Kafka
+        try {
+            ActivityEvent event = ActivityEvent.builder()
+                    .eventType(ActivityEvent.EventType.UPDATE) // 👈 EventType de Atualização
+                    .id(id)
+                    .userId(userId)
+                    .payload(request)
+                    .build();
+
+            String json = mapper.writeValueAsString(event);
+            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json);
+            System.out.println("Enviado evento de UPDATE para o Kafka do id: " + id);
+        } catch (Exception e) {
+            System.err.println("Erro ao publicar update no Kafka: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return request;
     }
 
     // --- CONSUMERS (Salvam no Mongo) ---
@@ -104,5 +137,27 @@ public class ActivityService {
     public void saveLogKafka(ActivityLog log) {
         activityLogRepository.save(log);
         System.out.println("✅ [MongoDB] Log de consulta salvo na collection 'activity_logs'");
+    }
+
+    /**
+     * Atualiza uma atividade existente no MongoDB a partir do evento recebido pelo Kafka.
+     *
+     * @param event Envelope do evento Kafka contendo metadados (id, userId, eventType)
+     * @param dto   Payload com as alterações parciais (title, completed)
+     */
+    public void updateActivityKafka(ActivityEvent event, ActivityUpdateRequest dto) {
+        // 1. Busca o documento existente no MongoDB pelo ID do evento
+        Activity existingActivity = activityRepository.findById(Long.valueOf(event.getId()))
+                .orElseThrow(() -> new RuntimeException("Atividade não encontrada no MongoDB com ID: " + event.getId()));
+
+        // 2. O MapStruct aplica as alterações parciais do DTO, atualiza o eventType e gera o timestampUpdate
+        activityMapper.updateEntityFromDto(event, dto, existingActivity);
+
+        // 3. Salva a entidade atualizada de volta no banco
+        activityRepository.save(existingActivity);
+
+        System.out.println("✅ [MongoDB] Atividade atualizada com sucesso. ID: " + event.getId()
+                + " | Usuário: " + existingActivity.getUserId()
+                + " | Atualizado em: " + existingActivity.getTimestampUpdate());
     }
 }

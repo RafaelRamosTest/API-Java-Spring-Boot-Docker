@@ -3,6 +3,7 @@ package com.exemple.activity.controller;
 
 import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityResponse;
+import com.exemple.activity.dto.ActivityUpdateRequest;
 import com.exemple.activity.service.ActivityService;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -36,12 +37,13 @@ public class ActivityController {
         return activityService.createActivity(activity, userId);
     }
 
-    /*@PutMapping("/update")
-    public ActivityCreateRequest updateActivity(
-            @RequestBody ActivityCreateRequest activity,
+    @PutMapping("/update/{id}")
+    public ActivityUpdateRequest updateActivity(
+            @PathVariable String id,
+            @RequestBody ActivityUpdateRequest activity,
             @AuthenticationPrincipal Jwt jwt) {
 
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
-        return activityService.updateActivity(activity, userId);
-    }*/
+        return activityService.updateActivity(id, activity, userId);
+    }
 }
