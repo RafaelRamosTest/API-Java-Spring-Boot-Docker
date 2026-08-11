@@ -43,13 +43,14 @@ public class ActivityService {
     }
 
     // --- FLUXO DO GET ---
-    public List<ActivityResponse> listAllActivitiesAndLog(String userId) {
+    public List<ActivityResponse> listAllActivitiesAndLog(String userId, String route) {
         ActivityResponse[] response = restTemplate.getForObject(url, ActivityResponse[].class);
         List<ActivityResponse> activities = response != null ? Arrays.asList(response) : Collections.emptyList();
 
         try {
             // 1. Instancia o objeto de log usando o Builder do Lombok
             ActivityLog logData = ActivityLog.builder()
+                    .route(route)
                     .timestamp(Instant.now())
                     .totalRecordsConsulted(activities.size())
                     .activities(activities)

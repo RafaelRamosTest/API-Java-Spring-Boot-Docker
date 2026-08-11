@@ -5,6 +5,7 @@ import com.exemple.activity.dto.ActivityCreateRequest;
 import com.exemple.activity.dto.ActivityResponse;
 import com.exemple.activity.dto.ActivityUpdateRequest;
 import com.exemple.activity.service.ActivityService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -23,9 +24,11 @@ public class ActivityController {
 
     @GetMapping
     public List<ActivityResponse> getActivities(
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest request) {
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
-        return activityService.listAllActivitiesAndLog(userId);
+        String route = request.getMethod() + " " + request.getRequestURI(); // Pega o método e o caminho real chamado (ex: "GET /activities")
+        return activityService.listAllActivitiesAndLog(userId, route);
     }
 
     @PostMapping("/create")

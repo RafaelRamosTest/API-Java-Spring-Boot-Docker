@@ -25,4 +25,5 @@ public class ActivityLog {
     private Instant timestamp;
     private int totalRecordsConsulted;
     private List<ActivityResponse> activities;
+    private String route;
 }
