@@ -76,30 +76,33 @@ public class ActivityService {
     // --- FLUXO DO POST ---
     public ActivityCreateRequest createActivity(ActivityCreateRequest activity, String userId) {
 
-        // 1. Garante que a atividade possua um ID (Gera um UUID caso não venha preenchido no request)
-        if (activity.getId() == null || activity.getId().isBlank()) {
-            activity.setId(java.util.UUID.randomUUID().toString());
+        // 1. Gera o ID via TSID se não foi informado (Instanciando novo Record imutável)
+        if (activity.id() == null || activity.id().isBlank()) {
+            activity = new ActivityCreateRequest(
+                    String.valueOf(io.hypersistence.tsid.TSID.fast().toLong()),
+                    activity.title(),
+                    activity.completed()
+            );
         }
 
-        // 2. Publica o evento de CREATE diretamente no Kafka
+        // 2. Publica no Kafka
         try {
             ActivityEvent event = ActivityEvent.builder()
-                    .eventType(ActivityEvent.EventType.CREATE) // Identifica como Cadastro
-                    .id(activity.getId())
+                    .eventType(ActivityEvent.EventType.CREATE)
+                    .id(activity.id()) // 👈 Usa .id() em vez de .getId()
                     .userId(userId)
-                    .payload(activity) // O próprio DTO é o payload
+                    .payload(activity)
                     .build();
 
             String json = mapper.writeValueAsString(event);
             activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json);
 
-            System.out.println("✅ Usuário " + userId + " publicou o cadastro no Kafka com ID: " + activity.getId());
+            System.out.println("✅ Cadastro publicado no Kafka com ID: " + activity.id());
         } catch (Exception e) {
-            System.err.println("❌ Erro ao publicar evento de cadastro no Kafka: " + e.getMessage());
+            System.err.println("❌ Erro ao publicar evento: " + e.getMessage());
             e.printStackTrace();
         }
 
-        // 3. Retorna o próprio objeto enviado (agora com ID garantido)
         return activity;
     }
 

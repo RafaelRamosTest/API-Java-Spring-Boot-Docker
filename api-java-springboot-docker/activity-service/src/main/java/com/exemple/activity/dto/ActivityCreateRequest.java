@@ -1,22 +1,14 @@
 package com.exemple.activity.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class ActivityCreateRequest {
-    private String id;
-    private String title;
-    private boolean completed;
-}
+public record ActivityCreateRequest(
+        String id, // Opcional no JSON de entrada (gerado via TSID se nulo)
 
-/*
-@Data: Substituiu todos os getters, setters, toString(), equals() e hashCode().
+        @NotBlank(message = "O título é obrigatório")
+        String title,
 
-@NoArgsConstructor: Cria o construtor padrão sem argumentos (public ActivityCreateRequest() {}), necessário para frameworks como Jackson (serialização JSON) e Spring.
-
-@AllArgsConstructor: Cria o construtor com todos os parâmetros que você tinha definido manualmente.
-*/
+        @NotNull(message = "O status 'completed' é obrigatório")
+        Boolean completed
+) {}
