@@ -27,26 +27,30 @@ public class ActivityController {
             @AuthenticationPrincipal Jwt jwt,
             HttpServletRequest request) {
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
-        String route = request.getMethod() + " " + request.getRequestURI(); // Pega o método e o caminho real chamado (ex: "GET /activities")
+        String route = request.getMethod() + " " + request.getRequestURI(); // Pega o méto-do e o caminho real chamado (ex: "GET /activities")
         return activityService.listAllActivitiesAndLog(userId, route);
     }
 
     @PostMapping("/create")
     public ActivityCreateRequest createActivity(
             @RequestBody ActivityCreateRequest activity,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest request) {
 
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
-        return activityService.createActivity(activity, userId);
+        String route = request.getMethod() + " " + request.getRequestURI(); // Pega o méto-do e o caminho real chamado (ex: "POST /create")
+        return activityService.createActivity(activity, userId, route);
     }
 
     @PutMapping("/update/{id}")
     public ActivityUpdateRequest updateActivity(
             @PathVariable String id,
             @RequestBody ActivityUpdateRequest activity,
-            @AuthenticationPrincipal Jwt jwt) {
+            @AuthenticationPrincipal Jwt jwt,
+            HttpServletRequest request) {
 
         String userId = jwt.getSubject(); // Captura o ID do usuário logado
-        return activityService.updateActivity(id, activity, userId);
+        String route = request.getMethod() + " " + request.getRequestURI(); // Pega o méto-do e o caminho real chamado (ex: "PUT /update/{id}")
+        return activityService.updateActivity(id, activity, userId, route);
     }
 }

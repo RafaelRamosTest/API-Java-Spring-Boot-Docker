@@ -8,7 +8,10 @@ import com.exemple.activity.dto.ActivityUpdateRequest;
 import com.exemple.activity.enums.KafkaConfigEnum;
 import com.exemple.activity.mapper.ActivityMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.hypersistence.tsid.TSID;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import com.exemple.activity.model.Activity;
 import com.exemple.activity.model.ActivityLog;
@@ -44,19 +47,68 @@ public class ActivityService {
 
     // --- FLUXO DO GET ---
     public List<ActivityResponse> listAllActivitiesAndLog(String userId, String route) {
-        ActivityResponse[] response = restTemplate.getForObject(url, ActivityResponse[].class);
-        List<ActivityResponse> activities = response != null ? Arrays.asList(response) : Collections.emptyList();
-
         try {
-            // 1. Instancia o objeto de log usando o Builder do Lombok
-            ActivityLog logData = ActivityLog.builder()
+            // 1. Executa a chamada retornando o ResponseEntity com o StatusCode HTTP
+            ResponseEntity<ActivityResponse[]> responseEntity = restTemplate.getForEntity(url, ActivityResponse[].class);
+
+            int httpStatus = responseEntity.getStatusCode().value(); // Ex: 200, 204
+            ActivityResponse[] body = responseEntity.getBody();
+            List<ActivityResponse> activities = body != null ? Arrays.asList(body) : Collections.emptyList();
+
+            // 2. Monta o Log de SUCESSO
+            ActivityLog successLog = ActivityLog.builder()
                     .route(route)
                     .timestamp(Instant.now())
                     .totalRecordsConsulted(activities.size())
                     .activities(activities)
+                    .statusCode(httpStatus)
+                    .status("SUCCESS")
                     .build();
 
-            // 2. Envelopa no ActivityEvent com eventType = READ
+            // 3. Publica o evento de SUCESSO no Kafka
+            publishKafkaLog(userId, successLog);
+
+            return activities;
+
+        } catch (HttpStatusCodeException e) {
+            // 3. Captura erros HTTP da API externa (ex: 400, 404, 500)
+            int httpStatus = e.getStatusCode().value();
+            System.err.println("❌ Erro HTTP " + httpStatus + " da API externa: " + e.getMessage());
+
+            ActivityLog errorLog = ActivityLog.builder()
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(httpStatus)
+                    .status("ERROR")
+                    .totalRecordsConsulted(0)
+                    .activities(Collections.emptyList())
+                    .errorMessage(e.getResponseBodyAsString().isEmpty() ? e.getMessage() : e.getResponseBodyAsString())
+                    .build();
+
+            publishKafkaLog(userId, errorLog);
+            throw e;
+        } catch (Exception e) {
+            // 4. Captura falhas de infraestrutura/conexão (Timeout, DNS, etc.)
+            System.err.println("❌ Erro de conexão/infraestrutura: " + e.getMessage());
+
+            ActivityLog errorLog = ActivityLog.builder()
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(500) // Fallback para erro de servidor/conexão
+                    .status("ERROR")
+                    .totalRecordsConsulted(0)
+                    .activities(Collections.emptyList())
+                    .errorMessage("Erro de integração/conexão: " + e.getMessage())
+                    .build();
+
+            publishKafkaLog(userId, errorLog);
+            throw e;
+        }
+    }
+
+    // Méto-do auxiliar isolado para publicar no Kafka sem duplicar código
+    private void publishKafkaLog(String userId, ActivityLog logData) {
+        try {
             ActivityEvent event = ActivityEvent.builder()
                     .eventType(ActivityEvent.EventType.READ)
                     .userId(userId)
@@ -69,14 +121,11 @@ public class ActivityService {
             System.err.println("Erro ao publicar log no Kafka: " + e.getMessage());
             e.printStackTrace();
         }
-
-        return activities;
     }
 
     // --- FLUXO DO POST ---
-    public ActivityCreateRequest createActivity(ActivityCreateRequest activity, String userId) {
+    public ActivityCreateRequest createActivity(ActivityCreateRequest activity, String userId, String route) {
 
-        // 1. Gera o ID via TSID se não foi informado (Instanciando novo Record imutável)
         if (activity.id() == null || activity.id().isBlank()) {
             activity = new ActivityCreateRequest(
                     String.valueOf(io.hypersistence.tsid.TSID.fast().toLong()),
@@ -85,48 +134,138 @@ public class ActivityService {
             );
         }
 
-        // 2. Publica no Kafka
         try {
-            ActivityEvent event = ActivityEvent.builder()
+            // 2. Evento do Domínio (Tópico ATIVIDADES -> Salva na coleção 'activities')
+            ActivityEvent domainEvent = ActivityEvent.builder()
+                    .id(activity.id())
                     .eventType(ActivityEvent.EventType.CREATE)
-                    .id(activity.id()) // 👈 Usa .id() em vez de .getId()
                     .userId(userId)
+                    .payload(activity) // 👈 Envia o DTO direto (contém title e completed na raiz)
+                    .build();
+
+            activityProducer.publishEvent(KafkaConfigEnum.ATIVIDADES, domainEvent);
+
+            // 3. Evento de Auditoria (Tópico LOGS -> Salva na coleção 'activity_logs')
+            ActivityLog successLog = ActivityLog.builder()
+                    .activityId(activity.id())
+                    .eventType("CREATE")
+                    .userId(userId)
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(200)
+                    .status("SUCCESS")
                     .payload(activity)
                     .build();
 
-            String json = mapper.writeValueAsString(event);
-            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json);
+            ActivityEvent logEvent = ActivityEvent.builder()
+                    .id(activity.id())
+                    .eventType(ActivityEvent.EventType.CREATE)
+                    .userId(userId)
+                    .payload(successLog)
+                    .build();
 
-            System.out.println("✅ Cadastro publicado no Kafka com ID: " + activity.id());
+            activityProducer.publishEvent(KafkaConfigEnum.LOGS, logEvent);
+
+            System.out.println("✅ Cadastro publicado nos tópicos do Kafka com ID: " + activity.id());
+            return activity;
+
         } catch (Exception e) {
-            System.err.println("❌ Erro ao publicar evento: " + e.getMessage());
-            e.printStackTrace();
-        }
+            System.err.println("❌ Erro ao publicar evento de cadastro: " + e.getMessage());
 
-        return activity;
+            // 4. Em caso de falha, publica apenas no tópico de LOGS
+            ActivityLog errorLog = ActivityLog.builder()
+                    .activityId(activity.id())
+                    .eventType("CREATE")
+                    .userId(userId)
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(500)
+                    .status("ERROR")
+                    .errorMessage("Falha no cadastro: " + e.getMessage())
+                    .payload(activity)
+                    .build();
+
+            ActivityEvent errorEvent = ActivityEvent.builder()
+                    .id(activity.id())
+                    .eventType(ActivityEvent.EventType.CREATE)
+                    .userId(userId)
+                    .payload(errorLog)
+                    .build();
+
+            activityProducer.publishEvent(KafkaConfigEnum.LOGS, errorEvent);
+
+            throw new RuntimeException("Erro ao processar cadastro da atividade: " + e.getMessage(), e);
+        }
     }
 
     // --- FLUXO DO PUT ---
-    public ActivityUpdateRequest updateActivity(String id, ActivityUpdateRequest request, String userId) {
+    public ActivityUpdateRequest updateActivity(String id, ActivityUpdateRequest request, String userId, String route) {
 
-        // 2. Publica o evento de UPDATE no Kafka
         try {
-            ActivityEvent event = ActivityEvent.builder()
-                    .eventType(ActivityEvent.EventType.UPDATE) // 👈 EventType de Atualização
+            // 1. Evento de DOMÍNIO -> Tópico ATIVIDADES (Atualiza a coleção 'activities')
+            ActivityEvent domainEvent = ActivityEvent.builder()
                     .id(id)
+                    .eventType(ActivityEvent.EventType.UPDATE)
                     .userId(userId)
+                    .payload(request) // 👈 DTO limpo (title e completed na raiz)
+                    .build();
+
+            activityProducer.publishEvent(KafkaConfigEnum.ATIVIDADES, domainEvent);
+
+            // 2. Evento de AUDITORIA -> Tópico LOGS (Salva na coleção 'activity_logs')
+            // Gera um ID único e exclusivo para o DOCUMENTO DE LOG
+            String logId = String.valueOf(TSID.fast().toLong());
+            ActivityLog successLog = ActivityLog.builder()
+                    .id(logId)              // 👈 ID único do Log
+                    .activityId(id)         // 👈 ID do recurso editado
+                    .eventType("UPDATE")
+                    .userId(userId)
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(200)
+                    .status("SUCCESS")
                     .payload(request)
                     .build();
 
-            String json = mapper.writeValueAsString(event);
-            activityProducer.publishActivity(KafkaConfigEnum.ATIVIDADES, json);
-            System.out.println("Enviado evento de UPDATE para o Kafka do id: " + id);
-        } catch (Exception e) {
-            System.err.println("Erro ao publicar update no Kafka: " + e.getMessage());
-            e.printStackTrace();
-        }
+            ActivityEvent logEvent = ActivityEvent.builder()
+                    .id(logId)              // 👈 Chave única da mensagem no Kafka
+                    .eventType(ActivityEvent.EventType.UPDATE)
+                    .userId(userId)
+                    .payload(successLog)
+                    .build();
 
-        return request;
+            activityProducer.publishEvent(KafkaConfigEnum.LOGS, logEvent);
+
+            System.out.println("✅ UPDATE enviado com sucesso para os tópicos ATIVIDADES e LOGS | ID: " + id);
+            return request;
+
+        } catch (Exception e) {
+            System.err.println("❌ Erro ao processar atualização: " + e.getMessage());
+
+            // Log de ERRO enviado apenas para o tópico LOGS
+            ActivityLog errorLog = ActivityLog.builder()
+                    .activityId(id)
+                    .eventType("UPDATE")
+                    .userId(userId)
+                    .route(route)
+                    .timestamp(Instant.now())
+                    .statusCode(500)
+                    .status("ERROR")
+                    .errorMessage("Falha no update: " + e.getMessage())
+                    .payload(request)
+                    .build();
+
+            ActivityEvent errorEvent = ActivityEvent.builder()
+                    .id(id)
+                    .eventType(ActivityEvent.EventType.UPDATE)
+                    .userId(userId)
+                    .payload(errorLog)
+                    .build();
+
+            activityProducer.publishEvent(KafkaConfigEnum.LOGS, errorEvent);
+
+            throw new RuntimeException("Erro ao processar atualização da atividade: " + e.getMessage(), e);
+        }
     }
 
     // --- CONSUMERS (Salvam no Mongo) ---

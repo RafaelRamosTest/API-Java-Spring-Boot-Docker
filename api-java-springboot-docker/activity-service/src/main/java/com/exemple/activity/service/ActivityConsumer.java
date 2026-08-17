@@ -16,11 +16,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor // 👈 O Lombok gera o construtor automaticamente para todos os campos 'final'
 public class ActivityConsumer {
 
-    //private final ObjectMapper mapper = new ObjectMapper().registerModule(new JavaTimeModule());
     private final ObjectMapper mapper;
     private final ActivityService activityService;
     private final ActivityMapper activityMapper; // 👈 Injeta o Mapper
-    //private final ActivityRepository activityRepository;
 
     // Listener 1: Focado em escutar e salvar novos CADASTROS (POST)
     @KafkaListener(
@@ -39,13 +37,21 @@ public class ActivityConsumer {
                 return;
             }
 
-            // 2. Roteia de acordo com o tipo do evento
+            // 2. Roteia de acordo com o tipo de evento do domínio
             switch (event.getEventType()) {
 
                 case CREATE:
                     System.out.println("🟢 Processando evento de CADASTRO (CREATE)...");
                     ActivityCreateRequest createDto = mapper.convertValue(event.getPayload(), ActivityCreateRequest.class);
                     Activity activity = activityMapper.activityEntity(event, createDto);
+
+                    // 🔴 Garantia do TSID como _id no MongoDB
+                    String createTsid = (event.getId() != null && !event.getId().isBlank())
+                            ? event.getId()
+                            : (createDto != null ? createDto.id() : null);
+                    activity.setId(createTsid);
+
+                    System.out.println("🔍 [CREATE] Salvando no Mongo com o ID (TSID): " + activity.getId());
 
                     activityService.saveActivityKafka(activity);
                     System.out.println("✅ [MongoDB] Atividade cadastrada com sucesso!");
@@ -55,8 +61,9 @@ public class ActivityConsumer {
                     System.out.println("🟡 Processando evento de ATUALIZAÇÃO (UPDATE)...");
                     ActivityUpdateRequest updateDto = mapper.convertValue(event.getPayload(), ActivityUpdateRequest.class);
 
-                    // Log de diagnóstico
-                    System.out.println("🔍 DTO Recebido -> Title: " + updateDto.getTitle() + " | Completed: " + updateDto.getCompleted());
+                    if (updateDto != null) {
+                        System.out.println("🔍 [UPDATE] DTO Recebido -> Title: " + updateDto.getTitle() + " | Completed: " + updateDto.getCompleted());
+                    }
 
                     activityService.updateActivityKafka(event, updateDto);
                     System.out.println("✅ [MongoDB] Atividade atualizada com sucesso!");
